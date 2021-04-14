@@ -77,6 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       return new Text('Error: ${snapshot.error}');
                     else
                       return ListView.builder(
+                        reverse: true,
                           itemCount: snapshot.data.docs.length,
                           itemBuilder: (context, index) {
                             DocumentSnapshot doc = snapshot.data.docs[index];
