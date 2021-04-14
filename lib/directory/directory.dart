@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:campusbuddy/directory/blank.dart';
 import 'directory_list_widget.dart';
+import 'chat_screen.dart';
 
 class Directory extends StatefulWidget {
   Directory({Key key}) : super(key: key);
@@ -62,6 +63,13 @@ class _DirectoryState extends State<Directory> {
       Scaffold(
 
         body: _children[_currentIndex],
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).pushNamed(ChatScreen.routeName);
+          },
+          child: const Icon(Icons.chat_bubble),
+          backgroundColor: Colors.indigo[700],
+        ),
 
         bottomNavigationBar: SizedBox(
           child: BottomNavigationBar(
