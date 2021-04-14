@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:html';
+
 import 'dart:io';
 import 'package:campusbuddy/auth/user.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -10,7 +10,6 @@ import 'directory.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:campusbuddy/auth/user.dart';
 
 class ChatScreen extends StatefulWidget {
   static const routeName = '/ChatScreen';
@@ -52,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
           StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection('messages')
-                  .orderBy('time', descending: true)
+                  .orderBy('time', descending: false)
                   .snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<QuerySnapshot> snapshot) {
@@ -86,14 +85,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                 doc["by"],
                                 textAlign: TextAlign.left,
                                 style: TextStyle(
-                                    fontSize: 2.0, color: Colors.grey[400]),
+                                    fontSize: 12.0, color: Colors.grey[400]),
                               ),
                               subtitle: Text(doc["content"],
-                                  textAlign: TextAlign.center,
+                                  textAlign: TextAlign.left,
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.indigo[700],
-                                      fontSize: 5.0)),
+                                      color: Colors.indigo[500],
+                                      fontSize: 18.0)),
+
+                              contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
                             );
                           });
                 }
