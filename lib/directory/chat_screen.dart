@@ -22,8 +22,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController textEditingController = TextEditingController();
   final FirebaseAuth auth = FirebaseAuth.instance;
 
-  //List<QueryDocumentSnapshot> listMessage = new List.from([]);
-
   void onSendMessage(String content) async {
     if (content.trim() != '') {
       textEditingController.clear();
@@ -77,7 +75,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       return new Text('Error: ${snapshot.error}');
                     else
                       return ListView.builder(
-                        reverse: true,
                           itemCount: snapshot.data.docs.length,
                           itemBuilder: (context, index) {
                             DocumentSnapshot doc = snapshot.data.docs[index];
