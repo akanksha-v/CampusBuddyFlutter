@@ -1,15 +1,11 @@
 import 'dart:async';
-
 import 'dart:io';
-import 'package:campusbuddy/auth/user.dart';
-import 'package:firebase_database/firebase_database.dart';
-
-import '../main.dart';
 import 'package:flutter/material.dart';
-import 'directory.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ChatScreen extends StatefulWidget {
   static const routeName = '/ChatScreen';
@@ -21,20 +17,84 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController textEditingController = TextEditingController();
   final FirebaseAuth auth = FirebaseAuth.instance;
+  ScrollController _scrollController = ScrollController();
 
   void onSendMessage(String content) async {
+    _scrollController.animateTo(_scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 1000), curve: Curves.fastOutSlowIn);
+
     if (content.trim() != '') {
       textEditingController.clear();
-      final user = auth.currentUser.email;
 
+      final user = auth.currentUser.email;
       CollectionReference messages =
           FirebaseFirestore.instance.collection('messages');
 
       await messages
           .add({'content': content, 'by': user, 'time': DateTime.now()});
     } else {
-      Fluttertoast.showToast(msg: 'Nothing to send');
+      Fluttertoast.showToast(msg: 'Nothing to send!');
     }
+  }
+
+  Widget futureBuilder() {
+    return StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection('messages')
+            .orderBy('time', descending: false)
+            .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              return Center(
+                heightFactor: 10,
+                widthFactor: 10,
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation(Colors.indigo[600]),
+                ),
+              );
+
+            case ConnectionState.waiting:
+              return Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation(Colors.indigo[600]),
+                ),
+              );
+
+            default:
+              if (snapshot.hasError)
+                return new Text('Error: ${snapshot.error}');
+              else
+                return new ListView.builder(
+                    controller: _scrollController,
+                    itemCount: snapshot.data.docs.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      DocumentSnapshot doc = snapshot.data.docs[index];
+                      return new ListTile(
+                        title: Text(
+                          doc["by"],
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                              fontSize: 12.0, color: Colors.grey[500]),
+                        ),
+                        subtitle: Text(
+                          doc["content"],
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                              color: Colors.indigo[700],
+                              fontSize: 18.0),
+                        ),
+                        trailing: Text(
+                          timeago.format(doc["time"].toDate()),
+                          style: TextStyle(
+                              fontSize: 12.0, color: Colors.grey[500]),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 15.0, vertical: 4.0),
+                      );
+                    });
+          }
+        });
   }
 
   @override
@@ -46,57 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       body: Stack(
         children: <Widget>[
-          StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection('messages')
-                  .orderBy('time', descending: false)
-                  .snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<QuerySnapshot> snapshot) {
-                switch (snapshot.connectionState) {
-                  case ConnectionState.none:
-                    return Center(
-                      heightFactor: 10,
-                      widthFactor: 10,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.blue),
-                      ),
-                    );
-
-                  case ConnectionState.waiting:
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(Colors.indigo[600]),
-                      ),
-                    );
-
-                  default:
-                    if (snapshot.hasError)
-                      return new Text('Error: ${snapshot.error}');
-                    else
-                      return ListView.builder(
-                          itemCount: snapshot.data.docs.length,
-                          itemBuilder: (context, index) {
-                            DocumentSnapshot doc = snapshot.data.docs[index];
-                            return ListTile(
-                              title: Text(
-                                doc["by"],
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                    fontSize: 12.0, color: Colors.grey[400]),
-                              ),
-                              subtitle: Text(doc["content"],
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.indigo[500],
-                                      fontSize: 18.0)),
-
-                              contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 4.0),
-                            );
-                          });
-                }
-              }),
+          futureBuilder(),
           Align(
             alignment: Alignment.bottomLeft,
             child: Container(
@@ -114,7 +124,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       controller: textEditingController,
                       decoration: InputDecoration(
                           hintText: "Type your message here..",
-                          hintStyle: TextStyle(color: Colors.black54),
+                          hintStyle: TextStyle(color: Colors.grey),
                           border: InputBorder.none),
                     ),
                   ),
@@ -123,7 +133,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   FloatingActionButton(
                     onPressed: () {
-                      onSendMessage(textEditingController.text);
+                      setState(() {
+                        onSendMessage(textEditingController.text);
+                      });
                     },
                     child: Icon(
                       Icons.send,
